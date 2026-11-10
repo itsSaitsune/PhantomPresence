@@ -6,6 +6,6 @@ static class RuntimePaths
     // shortcuts belong beside the original executable, never in that cache.
     internal static string Executable => Environment.ProcessPath is { } path &&
         !Path.GetFileNameWithoutExtension(path).Equals("dotnet",StringComparison.OrdinalIgnoreCase)
-        ? path : Path.Combine(AppContext.BaseDirectory,"P5XboxPresence.exe");
+        ? path : Path.Combine(AppContext.BaseDirectory,"PhantomPresence.exe");
     internal static string DataFolder => Path.GetDirectoryName(Executable)!;
 }

@@ -78,7 +78,7 @@ static class Settings
         executable ??= RuntimePaths.Executable;
         var entry=System.IO.Path.Combine(shortcutFolder,"Play Persona 5 Royal.lnk");
         if(!config.Autostart) { if(File.Exists(entry)) File.Delete(entry); return; }
-        if(!File.Exists(executable)) throw new IOException("Keep P5XboxPresence.exe in the app folder before enabling autostart.");
+        if(!File.Exists(executable)) throw new IOException("Keep PhantomPresence.exe in the app folder before enabling autostart.");
         var shellType=Type.GetTypeFromProgID("WScript.Shell") ?? throw new IOException("Windows shortcuts are unavailable.");
         dynamic shell=Activator.CreateInstance(shellType)!;
         dynamic shortcut=shell.CreateShortcut(entry);

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ApplicationIcon>resources/Assets/app.ico</ApplicationIcon>
-    <AssemblyName>P5XboxPresence</AssemblyName>
+    <AssemblyName>PhantomPresence</AssemblyName>
     <RootNamespace>P5XboxPresence</RootNamespace>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
