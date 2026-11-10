@@ -3,6 +3,11 @@
     <ApplicationIcon>resources/Assets/app.ico</ApplicationIcon>
     <AssemblyName>P5XboxPresence</AssemblyName>
     <RootNamespace>P5XboxPresence</RootNamespace>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>

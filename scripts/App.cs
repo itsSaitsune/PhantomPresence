@@ -39,10 +39,10 @@ static class App
                 Console.WriteLine("Calendar, activities, build routing, signatures, and Steam state checks passed."); return;
             }
             if (!OperatingSystem.IsWindows() || !Environment.Is64BitProcess) throw new Exception("64-bit Windows is required.");
-            var folder = AppContext.BaseDirectory;
+            var folder = RuntimePaths.DataFolder;
             var configPath = Path.Combine(folder, "config.json");
             var config = Settings.Load(configPath);
-            var locations = JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(folder,"locations.json")))!;
+            var locations = JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"locations.json")))!;
             if(args.Contains("--compatibility-report"))
             {
                 var processes=Process.GetProcessesByName("P5R");
@@ -167,7 +167,7 @@ static class App
         catch(Exception ex)
         {
             Console.Error.WriteLine(ex.Message); Environment.ExitCode=1;
-            if(args.Contains("--worker")) { try { File.WriteAllText(Path.Combine(AppContext.BaseDirectory,"status.txt"),"Error: "+ex.Message); } catch(IOException) { } }
+            if(args.Contains("--worker")) { try { File.WriteAllText(Path.Combine(RuntimePaths.DataFolder,"status.txt"),"Error: "+ex.Message); } catch(IOException) { } }
         }
     }
     static bool ValidId(string id)=> id.Length is >=17 and <=22 && id.All(char.IsAsciiDigit);

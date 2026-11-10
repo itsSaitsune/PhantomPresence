@@ -7,7 +7,7 @@ namespace P5XboxPresence;
 sealed class Config
 {
     [JsonPropertyName("applicationId")] public string ApplicationId { get; set; } = "1569451004389363884";
-    [JsonPropertyName("image")] public string Image { get; set; } = "";
+    [JsonPropertyName("image")] public string Image { get; set; } = "p5r";
     [JsonPropertyName("imageText")] public string ImageText { get; set; } = "Persona 5 Royal";
     [JsonPropertyName("path")] public string Path { get; set; } = "";
     [JsonPropertyName("experimentalSteam")] public bool ExperimentalSteam { get; set; }
@@ -74,8 +74,8 @@ static class Settings
     // A game launcher shortcut, never a Windows sign-in entry.
     internal static void SyncAutostart(Config config,string? shortcutFolder=null,string? executable=null)
     {
-        shortcutFolder ??= AppContext.BaseDirectory;
-        executable ??= System.IO.Path.Combine(AppContext.BaseDirectory,"P5XboxPresence.exe");
+        shortcutFolder ??= RuntimePaths.DataFolder;
+        executable ??= RuntimePaths.Executable;
         var entry=System.IO.Path.Combine(shortcutFolder,"Play Persona 5 Royal.lnk");
         if(!config.Autostart) { if(File.Exists(entry)) File.Delete(entry); return; }
         if(!File.Exists(executable)) throw new IOException("Keep P5XboxPresence.exe in the app folder before enabling autostart.");

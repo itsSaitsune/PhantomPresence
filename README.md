@@ -15,6 +15,10 @@ Shows the in-game date, time, and detected activity or location. Includes a tray
 - `resources/` — artwork, font, default configuration, location mappings, and third-party notices.
 - `P5RPresence.csproj` — project file.
 
+## Download
+
+Download **P5XboxPresence.exe** from [Release v1](https://github.com/itsSaitsune/PhantomPresence/releases/tag/v1). It is one Windows x64 executable with .NET and all assets included. Run it from a writable folder. Config, logs, and an optional game shortcut are created beside it when used; bundled files extract automatically to .NET's cache.
+
 ## Build
 
 Requires Windows x64 and the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
@@ -23,7 +27,7 @@ Requires Windows x64 and the [.NET 9 SDK](https://dotnet.microsoft.com/download/
 dotnet publish P5RPresence.csproj -c Release -r win-x64 --self-contained true -o publish
 ```
 
-Open `publish/P5XboxPresence.exe`. Keep the entire published folder together; it includes the runtime, assets, font, and location mappings.
+Open `publish/P5XboxPresence.exe`. The publish folder contains one executable, including the runtime, assets, font, location mappings, and license notices.
 
 ## Use
 

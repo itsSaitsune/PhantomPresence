@@ -6,7 +6,7 @@ namespace P5XboxPresence;
 sealed class CallingCard : Form
 {
     static readonly Color Red=Color.FromArgb(220,16,43),Ink=Color.FromArgb(16,16,20);
-    readonly string folder=AppContext.BaseDirectory;
+    readonly string folder=RuntimePaths.DataFolder;
     readonly TextBox appId=new(),gamePath=new(),image=new(),hover=new();
     readonly CheckBox auto=new(),experimental=new();
     readonly Label status=new();
@@ -28,8 +28,8 @@ sealed class CallingCard : Form
         ClientSize=new Size(1040,740); MinimumSize=MaximumSize=Size;
         StartPosition=FormStartPosition.CenterScreen; BackColor=Red; ForeColor=Color.White;
         Font=new Font("Segoe UI",10); DoubleBuffered=true; AutoScaleMode=AutoScaleMode.Dpi;
-        Icon=new Icon(Path.Combine(folder,"Assets","app.ico"));
-        var portrait=Path.Combine(folder,"Assets","morgana.png");
+        Icon=new Icon(Path.Combine(AppContext.BaseDirectory,"Assets","app.ico"));
+        var portrait=Path.Combine(AppContext.BaseDirectory,"Assets","morgana.png");
         if(File.Exists(portrait)) morgana=Image.FromFile(portrait);
 
         var left=new Panel { Location=new(32,180),Size=new(976,450),BackColor=Ink };
@@ -205,7 +205,7 @@ sealed class CallingCard : Form
         try
         {
             File.WriteAllText(Path.Combine(folder,"status.txt"),"Not connected");
-            worker=Process.Start(new ProcessStartInfo(Path.Combine(folder,"P5XboxPresence.exe"),"--worker --exit-with-game") { UseShellExecute=false,CreateNoWindow=true,WorkingDirectory=folder });
+            worker=Process.Start(new ProcessStartInfo(RuntimePaths.Executable,"--worker --exit-with-game") { UseShellExecute=false,CreateNoWindow=true,WorkingDirectory=folder });
             hideAfterConnection=true;
             status.Text=GameRunning()?"Loading the save file..":"Not connected";
         }
