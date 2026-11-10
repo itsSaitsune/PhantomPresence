@@ -1,0 +1,17 @@
+# Build and publish output
+bin/
+obj/
+publish/
+.vs/
+*.user
+*.suo
+
+# Local runtime state
+runtime.log*
+status.txt
+status.json
+last-presence.json
+compatibility-report.json
+*.lnk
+*.tmp
+settings-test-*/
