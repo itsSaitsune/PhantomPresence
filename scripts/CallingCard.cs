@@ -194,7 +194,7 @@ sealed class CallingCard : Form
     {
         foreach(var p in Process.GetProcessesByName("P5R")) using(p)
         {
-            try { if(string.IsNullOrWhiteSpace(config.Path) || string.Equals(p.MainModule?.FileName,config.Path,StringComparison.OrdinalIgnoreCase)) return true; } catch { }
+            try { if(GamePaths.Match(p.MainModule?.FileName??"",config.Path)) return true; } catch { }
         }
         return false;
     }

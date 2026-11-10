@@ -223,7 +223,7 @@ sealed class GameReader : IGameReader
             var matching=new List<Process>();
             foreach(var p in ps)
             {
-                try { if(string.Equals(p.MainModule?.FileName,gamePath,StringComparison.OrdinalIgnoreCase)) { matching.Add(p); continue; } }
+                try { if(GamePaths.Match(p.MainModule?.FileName??"",gamePath)) { matching.Add(p); continue; } }
                 catch { p.Dispose(); throw; }
                 p.Dispose();
             }

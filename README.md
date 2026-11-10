@@ -17,7 +17,7 @@ Shows the in-game date, time, and detected activity or location. Includes a tray
 
 ## Download
 
-Download **P5XboxPresence.exe** from [Release v1](https://github.com/itsSaitsune/PhantomPresence/releases/tag/v1). It is one Windows x64 executable with .NET and all assets included. Run it from a writable folder. Config, logs, and an optional game shortcut are created beside it when used; bundled files extract automatically to .NET's cache.
+Download **P5XboxPresence.exe** from [Release v1.1](https://github.com/itsSaitsune/PhantomPresence/releases/tag/v1.1). It is one Windows x64 executable with .NET and all assets included. Run it from a writable folder. Config, logs, and an optional game shortcut are created beside it when used; bundled files extract automatically to .NET's cache.
 
 ## Build
 

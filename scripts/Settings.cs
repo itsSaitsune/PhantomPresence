@@ -117,6 +117,7 @@ static class Settings
         if(ValidImage("C:\\local.png") || ValidImage("javascript:bad") || !ValidImage("my_asset") || !ValidImage("https://example.com/art.png")) throw new Exception("Image validation failed.");
         if(!loaded.HideToTrayOnLaunch) throw new Exception("Configured launches should hide to tray by default.");
         GameLauncher.SelfTest(root);
+        GamePaths.SelfTest(root);
         File.Delete(configPath); File.Delete(executable); Directory.Delete(startup); Directory.Delete(root);
         Console.WriteLine("Setup, config, game shortcut creation/removal, tray default, Xbox/Steam/standalone launch targets, and concise status checks passed (temporary folder only; no game launched).");
     }
