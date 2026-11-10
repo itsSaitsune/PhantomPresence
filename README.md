@@ -1,6 +1,6 @@
 # Phantom Presence
 
-Discord Rich Presence for **Persona 5 Royal** on Windows, with a Persona-inspired interface and Morgana speech banner.
+Discord Rich Presence for **Persona 5 Royal** on Windows.
 
 Shows the in-game date, time, and detected activity or location. Includes a tray icon, a game launcher shortcut, and automatic exit when the game closes. The shared Discord application and artwork are preconfigured; no bot or account token is needed.
 
