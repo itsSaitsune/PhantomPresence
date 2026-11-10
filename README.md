@@ -9,12 +9,18 @@ Shows the in-game date, time, and detected activity or location. Includes a tray
 - **Xbox / Game Pass PC:** tested game layout from package **1.10.27.0**.
 - **Steam / modified builds:** optional, experimental, and not live-tested. Limited to date/time and sequence-based menu, battle, story, and some activity detection. Location names and conversation partners are not implemented for this reader. Other executable layouts may be rejected.
 
+## Project files
+
+- `scripts/` — C# source.
+- `resources/` — artwork, font, default configuration, location mappings, and third-party notices.
+- `P5RPresence.csproj` — project file.
+
 ## Build
 
 Requires Windows x64 and the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
 
 ```powershell
-dotnet publish P5XboxPresence.csproj -c Release -r win-x64 --self-contained true -o publish
+dotnet publish P5RPresence.csproj -c Release -r win-x64 --self-contained true -o publish
 ```
 
 Open `publish/P5XboxPresence.exe`. Keep the entire published folder together; it includes the runtime, assets, font, and location mappings.
@@ -33,6 +39,6 @@ After setup, the app hides to the tray. Double-click the tray icon to reopen it.
 
 ## Credits
 
-Application source is licensed under [GPL-3.0](LICENSE). Game-state references include [p5rpc.lib](https://github.com/AnimatedSwine37/p5rpc.lib), [MultiPresence](https://github.com/Dekirai/MultiPresence) ([MIT notice](THIRD-PARTY-MultiPresence.txt)), and location/activity references from [Persona 5 Royal Mod Menu](https://github.com/Amicitia/Persona-5-Royal-Mod-Menu).
+Application source is licensed under [GPL-3.0](LICENSE). Game-state references include [p5rpc.lib](https://github.com/AnimatedSwine37/p5rpc.lib), [MultiPresence](https://github.com/Dekirai/MultiPresence) ([MIT notice](resources/licenses/MultiPresence.txt)), and location/activity references from [Persona 5 Royal Mod Menu](https://github.com/Amicitia/Persona-5-Royal-Mod-Menu).
 
-Exposé Regular by James Lewis: [font notice](Fonts/NOTICE.txt). Persona artwork belongs to its respective owners; it is separate from the source-code license. This is an unofficial fan project.
+Exposé Regular by James Lewis: [font notice](resources/Fonts/NOTICE.txt). Persona artwork belongs to its respective owners; it is separate from the source-code license. This is an unofficial fan project.
