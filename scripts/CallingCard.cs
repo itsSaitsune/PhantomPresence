@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
-
 namespace P5XboxPresence;
-
 sealed class CallingCard : Form
 {
     static readonly Color Red=Color.FromArgb(220,16,43),Ink=Color.FromArgb(16,16,20);
@@ -19,11 +17,10 @@ sealed class CallingCard : Form
     Process? worker;
     bool quit,launchRequested,hideAfterConnection,gameSeen,sessionActive;
     DateTime launchDeadline;
-
     internal CallingCard(bool startup,bool preview=false)
     {
         launchRequested=startup;
-        config=Settings.Load(Path.Combine(folder,"config.json"));
+        config=Settings.Load();
         Text="Phantom Presence · Persona 5 Royal";
         ClientSize=new Size(1040,740); MinimumSize=MaximumSize=Size;
         StartPosition=FormStartPosition.CenterScreen; BackColor=Red; ForeColor=Color.White;
@@ -31,7 +28,6 @@ sealed class CallingCard : Form
         Icon=new Icon(Path.Combine(AppContext.BaseDirectory,"Assets","app.ico"));
         var portrait=Path.Combine(AppContext.BaseDirectory,"Assets","morgana.png");
         if(File.Exists(portrait)) morgana=Image.FromFile(portrait);
-
         var left=new Panel { Location=new(32,180),Size=new(976,450),BackColor=Ink };
         Controls.Add(left);
         AddLabel(left,"01 / YOUR GAME",20,15,true);
@@ -46,10 +42,8 @@ sealed class CallingCard : Form
         experimental.Text="Experimental Steam / modified builds (untested; limited data)";
         experimental.Location=new(20,416); experimental.Size=new(900,28); experimental.ForeColor=Color.White; experimental.Checked=config.ExperimentalSteam;
         left.Controls.Add(experimental);
-        AddLabel(left,"Save config to create a game + presence shortcut in this app folder. Closes with the game.",20,390);
-
-
-        Button(this,"SAVE CONFIG",32,650,182,46,()=>Save());
+        AddLabel(left,"Save settings to create a game + presence shortcut in this app folder. Closes with the game.",20,390);
+        Button(this,"SAVE SETTINGS",32,650,182,46,()=>Save());
         Button(this,"CONNECT NOW",227,650,182,46,()=>ConnectNow());
         Button(this,"STOP PRESENCE",422,650,182,46,()=>StopWorker());
         Button(this,"HIDE TO TRAY",665,650,165,46,()=>HideToTray());
@@ -57,7 +51,6 @@ sealed class CallingCard : Form
         status.Location=new(32,710); status.Size=new(980,26); status.Font=new("Segoe UI",10); status.Text="Not connected"; Controls.Add(status);
         appId.Text=config.ApplicationId; gamePath.Text=config.Path; image.Text=config.Image; hover.Text=config.ImageText;
         if(string.IsNullOrWhiteSpace(gamePath.Text)) DetectPath();
-
         var menu=new ContextMenuStrip();
         menu.Items.Add("Open calling card",null,(_,_)=>{ Show(); WindowState=FormWindowState.Normal; Activate(); });
         menu.Items.Add("Connect now",null,(_,_)=>ConnectNow());
@@ -81,7 +74,6 @@ sealed class CallingCard : Form
         };
         FormClosed+=(_,_)=>{ timer.Dispose(); tray.Dispose(); morgana?.Dispose(); launchRequest.Dispose(); worker?.Dispose(); };
     }
-
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e); var g=e.Graphics; g.SmoothingMode=SmoothingMode.AntiAlias;
@@ -112,7 +104,6 @@ sealed class CallingCard : Form
             g.DrawImage(morgana,new RectangleF(879,0,155,155*cropHeight/morgana.Width),new RectangleF(0,0,morgana.Width,cropHeight),GraphicsUnit.Pixel);
         }
     }
-
     bool Save()
     {
         try
@@ -124,7 +115,7 @@ sealed class CallingCard : Form
             if(hover.Text.Length>128) throw new Exception("Image hover text must be at most 128 characters.");
             var next=new Config { ApplicationId=id,Path=path,Image=art,ImageText=hover.Text.Trim(),Autostart=auto.Checked,ExperimentalSteam=experimental.Checked,SetupComplete=true,HideToTrayOnLaunch=config.HideToTrayOnLaunch };
             Settings.SyncAutostart(next);
-            Settings.Save(Path.Combine(folder,"config.json"),next); config=next;
+            Settings.Save(next); config=next;
             if(worker is { HasExited:false }) { StopWorker(false); StartWorker(); }
             status.Text=worker is { HasExited:false }?status.Text:"Not connected";
             return true;
@@ -158,9 +149,8 @@ sealed class CallingCard : Form
             status.Text="Not connected";
             if(failed)
             {
-
-                var path=Path.Combine(folder,"status.txt");
-                try { status.Text=File.Exists(path)?PresenceStatus.Display(File.ReadAllText(path)):"Error: Presence could not start."; } catch(IOException) { status.Text="Error: Presence could not start."; }
+                status.Text=PresenceStatus.Display(RuntimeStatus.Text);
+                if(!status.Text.StartsWith("Error:",StringComparison.Ordinal)) status.Text="Error: Presence could not start.";
             }
         }
         if(sessionActive)
@@ -179,12 +169,9 @@ sealed class CallingCard : Form
         {
             try
             {
-                var path=Path.Combine(folder,"status.txt"); if(File.Exists(path))
-                {
-                    status.Text=PresenceStatus.Display(File.ReadAllText(path));
-                    tray.Text="Phantom Presence · "+(status.Text=="Connected"?"connected":"not connected");
-                    if(hideAfterConnection && status.Text=="Connected") { hideAfterConnection=false; Hide(); }
-                }
+                status.Text=PresenceStatus.Display(RuntimeStatus.Text);
+                tray.Text="Phantom Presence · "+(status.Text=="Connected"?"connected":"not connected");
+                if(hideAfterConnection && status.Text=="Connected") { hideAfterConnection=false; Hide(); }
             }
             catch(IOException) { }
         }
@@ -204,7 +191,7 @@ sealed class CallingCard : Form
         if(!config.SetupComplete) { status.Text="Error: Save your config first."; return; }
         try
         {
-            File.WriteAllText(Path.Combine(folder,"status.txt"),"Not connected");
+            RuntimeStatus.Text="Not connected";
             worker=Process.Start(new ProcessStartInfo(RuntimePaths.Executable,"--worker --exit-with-game") { UseShellExecute=false,CreateNoWindow=true,WorkingDirectory=folder });
             hideAfterConnection=true;
             status.Text=GameRunning()?"Loading the save file..":"Not connected";

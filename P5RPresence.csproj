@@ -2,6 +2,8 @@
   <PropertyGroup>
     <ApplicationIcon>resources/Assets/app.ico</ApplicationIcon>
     <AssemblyName>PhantomPresence</AssemblyName>
+    <Version>1.2.0</Version>
+    <Product>PhantomPresence</Product>
     <RootNamespace>P5XboxPresence</RootNamespace>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
@@ -17,7 +19,7 @@
 
   <ItemGroup>
     <None Remove="resources/**" />
-    <None Include="resources/config.json;resources/locations.json" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="resources/locations.json;resources/confidants.json" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="resources/Assets/**/*" Link="Assets/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="resources/Fonts/**/*" Link="Fonts/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="resources/licenses/MultiPresence.txt" Link="THIRD-PARTY-MultiPresence.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

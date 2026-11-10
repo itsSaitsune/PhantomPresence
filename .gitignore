@@ -15,3 +15,6 @@ compatibility-report.json
 *.lnk
 *.tmp
 settings-test-*/
+
+# Legacy settings (new versions use the Windows registry)
+config.json

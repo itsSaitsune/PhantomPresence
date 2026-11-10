@@ -1,23 +1,36 @@
 # Phantom Presence
 
-Discord Rich Presence for **Persona 5 Royal** on Windows.
-
-Shows the in-game date, time, and detected activity or location. Includes a tray icon, a game launcher shortcut, and automatic exit when the game closes. The shared Discord application and artwork are preconfigured; no bot or account token is needed.
-
-## Compatibility
-
-- **Xbox / Game Pass PC:** tested game layout from package **1.10.27.0**.
-- **Steam / modified builds:** optional, experimental, and not live-tested. Limited to date/time and sequence-based menu, battle, story, and some activity detection. Location names and conversation partners are not implemented for this reader. Other executable layouts may be rejected.
-
-## Project files
-
-- `scripts/` — C# source.
-- `resources/` — artwork, font, default configuration, location mappings, and third-party notices.
-- `P5RPresence.csproj` — project file.
+Discord Rich Presence for **Persona 5 Royal** on Windows. Shows the in-game date, time, and activity or location.
 
 ## Download
 
-Download **PhantomPresence.exe** from [Release v1.1](https://github.com/itsSaitsune/PhantomPresence/releases/tag/v1.1). It is one Windows x64 executable with .NET and all assets included. Run it from a writable folder. Config, logs, and an optional game shortcut are created beside it when used; bundled files extract automatically to .NET's cache.
+Download **[PhantomPresence.exe — Release v1.2](https://github.com/itsSaitsune/PhantomPresence/releases/tag/v1.2)**. It is one Windows x64 EXE with .NET and assets included.
+
+1. Open Discord desktop.
+2. Run PhantomPresence.exe and select your P5R.exe.
+3. Click **Connect Now**.
+
+Quit an older copy before replacing the EXE. Existing settings are migrated automatically.
+
+**Allow autostart → Save Settings** creates a shortcut that launches the game and presence together. The app closes when the game exits. It does not start with Windows. Double-click the tray icon to reopen settings.
+
+Settings are stored in the Windows user registry. No config, status, or log files are created beside the EXE. The optional shortcut and .NET's temporary extraction cache are still used.
+
+## v1.2 bugfixes
+
+- Fixed confidant hangouts not being shown correctly.
+- Fixed ordinary NPC conversations incorrectly showing as hangouts; they now show the location only.
+- Fixed classroom, exam, and exam-result activity detection.
+- Fixed missing and incorrect location labels, including the clinic and Big Bang Burger.
+- Fixed burger-challenge text across all challenge levels.
+- Fixed unwanted config, status, and log files being created beside the app.
+
+## Compatibility
+
+- **Xbox / Game Pass PC:** tested layout from package **1.10.27.0**.
+- **Steam / modified builds:** optional and experimental; not live-tested. Limited date/time and sequence detection. Dialogue-based detection and general location names are not supported by that reader.
+
+Confidant and location mappings use game-script references; not every scene/location has been live-tested. Normal story scenes remain generic. The shared Discord application/artwork are preconfigured; no bot or account token is needed.
 
 ## Build
 
@@ -27,22 +40,10 @@ Requires Windows x64 and the [.NET 9 SDK](https://dotnet.microsoft.com/download/
 dotnet publish P5RPresence.csproj -c Release -r win-x64 --self-contained true -o publish
 ```
 
-Open `publish/PhantomPresence.exe`. The publish folder contains one executable, including the runtime, assets, font, location mappings, and license notices.
-
-## Use
-
-1. Open Discord desktop.
-2. Open Phantom Presence and select `P5R.exe` using **Browse**, or paste its full path.
-3. Click **Connect Now** to launch the game and connect presence.
-
-For an unverified Steam/modified build, enable **Experimental Steam / modified builds** before saving.
-
-**Allow autostart → Save Config** creates `Play Persona 5 Royal.lnk` beside the app. Use that shortcut to start both together. It does not start with Windows, and launching the game independently cannot start a fully closed presence app.
-
-After setup, the app hides to the tray. Double-click the tray icon to reopen it. Configuration is stored in `config.json`; diagnostics are written beside the app. The reader only requests read/query access to the game.
+Run `publish/PhantomPresence.exe`. Source is in `scripts/`; assets and mappings are in `resources/`.
 
 ## Credits
 
-Application source is licensed under [GPL-3.0](LICENSE). Game-state references include [p5rpc.lib](https://github.com/AnimatedSwine37/p5rpc.lib), [MultiPresence](https://github.com/Dekirai/MultiPresence) ([MIT notice](resources/licenses/MultiPresence.txt)), and location/activity references from [Persona 5 Royal Mod Menu](https://github.com/Amicitia/Persona-5-Royal-Mod-Menu).
+[GPL-3.0](LICENSE). References: [p5rpc.lib](https://github.com/AnimatedSwine37/p5rpc.lib), [MultiPresence](https://github.com/Dekirai/MultiPresence) ([MIT notice](resources/licenses/MultiPresence.txt)), [field mappings](https://github.com/ShrineFox/Persona-5-Mod-Menu), and [game-script references](https://github.com/GuhLucena/p5r).
 
-Exposé Regular by James Lewis: [font notice](resources/Fonts/NOTICE.txt). Persona artwork belongs to its respective owners; it is separate from the source-code license. This is an unofficial fan project.
+Exposé Regular by James Lewis: [font notice](resources/Fonts/NOTICE.txt). Persona artwork is separate from the source-code license. Unofficial fan project.

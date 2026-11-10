@@ -1,13 +1,11 @@
 using System.Runtime.InteropServices;
-
 namespace P5XboxPresence;
-
 static class Entry
 {
     [STAThread]
     static void Main(string[] args)
     {
-        if(args.Any(a=>a is "--console" or "--setup" or "--probe" or "--dialogue-probe" or "--self-test" or "--settings-self-test" or "--compatibility-report" or "--launch-plan" or "--stop" or "--worker"))
+        if(args.Any(a=>a is "--console" or "--setup" or "--probe" or "--dialogue-probe" or "--self-test" or "--settings-self-test" or "--compatibility-report" or "--launch-plan" or "--stop" or "--worker" or "--runtime-status" or "--runtime-self-test" or "--status-test-client"))
         {
             if(args.Contains("--console") || args.Contains("--setup")) AllocConsole();
             App.Run(args).GetAwaiter().GetResult();

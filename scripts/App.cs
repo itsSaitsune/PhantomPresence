@@ -7,9 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Win32.SafeHandles;
-
 namespace P5XboxPresence;
-
 static class App
 {
     static readonly JsonSerializerOptions Json = new() { WriteIndented = true, PropertyNameCaseInsensitive = true };
@@ -18,6 +16,10 @@ static class App
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         try
         {
+            if(args.Contains("--runtime-status")) { Console.WriteLine(RuntimeStatus.Text); return; }
+            if(args.Contains("--runtime-self-test")) { RuntimeStatus.SelfTest(); return; }
+            var client=Array.IndexOf(args,"--status-test-client");
+            if(client>=0) { using var bus=new MemoryStatus(args[client+1]); bus.Text="Connected"; return; }
             if(args.Contains("--settings-self-test")) { Settings.SelfTest(); return; }
             var launchPlan=Array.IndexOf(args,"--launch-plan");
             if(launchPlan>=0)
@@ -30,18 +32,36 @@ static class App
             {
                 if (GameReader.Date(147).ToString("MM/dd",CultureInfo.InvariantCulture) != "08/26" || GameReader.Date(147).DayOfWeek != DayOfWeek.Friday || GameReader.Date(275).ToString("MM/dd",CultureInfo.InvariantCulture) != "01/01") throw new Exception("Calendar test failed.");
                 var ohya=new DialogueInfo(61,0,1,"Morgana","MSG_COOP_CHECK_NIGHT","Are you gonna hang out with Ohya?",null);
-                if(GameReader.ClassifyActivity(10,12,ohya)!="Talking to Ohya") throw new Exception("Conversation partner test failed.");
+                if(GameReader.ClassifyActivity(10,12,ohya)!="Exploring Tokyo") throw new Exception("Conversation partner test failed.");
                 if(GameReader.ClassifyActivity(3,2,null,"760_101")!="Studying") throw new Exception("Study-event test failed.");
                 if(GameReader.ClassifyActivity(3,2,new(0,1,0,"Morgana","MSG_ReadStart",null,null))=="Reading") throw new Exception("Reading prompt misclassified.");
                 if(GameReader.ClassifyActivity(3,2,new(0,1,0,null,"MND_BookID_001_Start",null,null))!="Reading") throw new Exception("Reading label test failed.");
                 if(GameReader.ClassifyActivity(190,2,null,null,3)!="Exploring Mementos") throw new Exception("Mementos test failed.");
+                var staleBecky=new DialogueInfo(31,0,0,"Becky","CHAT_REACTION_MSG",null,null);
+                var activeKawakami=new DialogueInfo(33,1,0,"Kawakami","MSG_003_0_0",null,null);
+                if(GameReader.SelectDialogue(new[]{staleBecky,activeKawakami})!=activeKawakami) throw new Exception("Inactive phone message took priority over live dialogue.");
+                if(GameReader.ClassifyActivity(3,2,activeKawakami,"714_91")!="Hanging out with Sadayo Kawakami" ||
+                   GameReader.ClassifyActivity(3,2,null,"714_91")!="Hanging out with Sadayo Kawakami" ||
+                   GameReader.ClassifyActivity(3,2,new(31,1,0,"Becky",null,null,null))!="Exploring Tokyo") throw new Exception("Kawakami alias/confidant recognition failed.");
+                if(GameReader.ClassifyActivity(3,2,activeKawakami,"700_310")!="Hanging out with Sadayo Kawakami" ||
+                   GameReader.ClassifyActivity(3,2,staleBecky,"700_310")!="Following the story") throw new Exception("Confidant follow-up needs an active participant.");
+                if(GameReader.ClassifyActivity(3,2,activeKawakami,"500_1")!="Following the story") throw new Exception("Story dialogue should remain generic.");
+                var mappedLocations=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"locations.json")))!;
+                if(mappedLocations.GetValueOrDefault("10_1")!="Takemi Medical Clinic" || PresenceText.SecondLine("Exploring Tokyo",mappedLocations["10_1"])!="Takemi Medical Clinic") throw new Exception("Clinic location/display regression.");
+                foreach(var speaker in new[]{"Yusuke","Becky","Female Employee","Morgana"})
+                {
+                    var ordinary=new DialogueInfo(46,1,5,speaker,"MSG_E320102_YUSUKE_000_0",null,null);
+                    var ordinaryActivity=GameReader.ClassifyActivity(12,26,ordinary);
+                    if(PresenceText.SecondLine(ordinaryActivity,mappedLocations["12_26"])!="Waikiki Beach") throw new Exception("Ordinary NPC dialogue must display the location only.");
+                }
+                LocationNames.SelfTest(mappedLocations);
+                Confidants.SelfTest();
                 CompatibilityTests.Run();
                 Console.WriteLine("Calendar, activities, build routing, signatures, and Steam state checks passed."); return;
             }
             if (!OperatingSystem.IsWindows() || !Environment.Is64BitProcess) throw new Exception("64-bit Windows is required.");
             var folder = RuntimePaths.DataFolder;
-            var configPath = Path.Combine(folder, "config.json");
-            var config = Settings.Load(configPath);
+            var config = Settings.Load();
             var locations = JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"locations.json")))!;
             if(args.Contains("--compatibility-report"))
             {
@@ -56,8 +76,6 @@ static class App
                     var report=new { Executable="P5R.exe", memory.Timestamp,memory.ImageSize, SequenceSignature=signature,
                         TestedXboxIdentity=BuildIdentity.IsTestedXbox(memory.Timestamp,memory.ImageSize),
                         Steam="Experimental: date/time and sequence only; locations and dialogue unavailable" };
-                    var reportPath=Path.Combine(folder,"compatibility-report.json");
-                    File.WriteAllText(reportPath,JsonSerializer.Serialize(report,Json));
                     Console.WriteLine(JsonSerializer.Serialize(report,Json));
                 }
                 finally { foreach(var process in processes) process.Dispose(); }
@@ -82,24 +100,19 @@ static class App
             if (!first)
             {
                 const string message="Error: Another presence instance is running. Close it and retry.";
-                Console.WriteLine(message); if(startup) File.WriteAllText(Path.Combine(folder,"status.txt"),message);
+                Console.WriteLine(message); if(startup) RuntimeStatus.Text=message;
                 Environment.ExitCode=2; return;
             }
             if(!startup && (!config.SetupComplete || !ValidId(config.ApplicationId) || args.Contains("--setup")))
             {
                 config=Settings.Setup(config,Console.In,Console.Out);
-                Settings.Save(configPath,config);
-                Console.WriteLine("Saved "+configPath);
+                Settings.Save(config);
+                Console.WriteLine("Saved settings to your Windows user profile.");
             }
-            if(!Settings.ValidImage(config.Image)) throw new Exception("Invalid image in config.json. Use an asset key or HTTPS URL.");
+            if(!Settings.ValidImage(config.Image)) throw new Exception("Invalid image in settings. Use an asset key or HTTPS URL.");
             if(!startup) Settings.SyncAutostart(config);
             if(args.Contains("--setup")) return;
-            if(startup)
-            {
-                var log=Path.Combine(folder,"runtime.log");
-                if(File.Exists(log) && new FileInfo(log).Length>1048576) File.WriteAllText(log,"");
-                var writer=new StreamWriter(log,true) { AutoFlush=true }; Console.SetOut(writer); Console.SetError(writer);
-            }
+            if(startup) { Console.SetOut(TextWriter.Null); Console.SetError(TextWriter.Null); }
             using var stop = new CancellationTokenSource();
             using var stopSignal=new EventWaitHandle(false,EventResetMode.ManualReset,"Local\\P5XboxPresence.Stop");
             stopSignal.Reset();
@@ -133,11 +146,6 @@ static class App
                             if(!string.IsNullOrWhiteSpace(config.Image)) activity["assets"]=new { large_image=config.Image,large_text=config.ImageText };
                             await discord.Activity(activity,stop.Token);
                             published=true;
-                            if(startup)
-                            {
-                                File.WriteAllText(Path.Combine(folder,"status.json"),JsonSerializer.Serialize(new { state.Activity,state.Date,state.Time,state.Location }));
-                                File.WriteAllText(Path.Combine(folder,"last-presence.json"),JsonSerializer.Serialize(activity,Json));
-                            }
                             Log($"{state.Date} · {state.Time} · {state.Location} · {state.Activity} [field {state.FieldId}] — Discord accepted");
                         }
                     }
@@ -160,14 +168,14 @@ static class App
                 if(discord!=null) { try { await discord.Activity(null,CancellationToken.None); } catch { } discord.Dispose(); }
                 reader?.Dispose();
                 stopRegistration.Unregister(null);
-                if(startup) File.WriteAllText(Path.Combine(folder,"status.txt"),"Not connected");
+                if(startup) RuntimeStatus.Text="Not connected";
             }
-            void Log(string s) { if(s!=lastLog) { Console.WriteLine(s); lastLog=s; if(startup) File.WriteAllText(Path.Combine(folder,"status.txt"),PresenceStatus.Display(s)); } }
+            void Log(string s) { if(s!=lastLog) { Console.WriteLine(s); lastLog=s; if(startup) RuntimeStatus.Text=PresenceStatus.Display(s); } }
         }
         catch(Exception ex)
         {
             Console.Error.WriteLine(ex.Message); Environment.ExitCode=1;
-            if(args.Contains("--worker")) { try { File.WriteAllText(Path.Combine(RuntimePaths.DataFolder,"status.txt"),"Error: "+ex.Message); } catch(IOException) { } }
+            if(args.Contains("--worker")) { try { RuntimeStatus.Text="Error: "+ex.Message; } catch(IOException) { } }
         }
     }
     static bool ValidId(string id)=> id.Length is >=17 and <=22 && id.All(char.IsAsciiDigit);
@@ -184,7 +192,6 @@ static class PresenceText
         return passive && !string.IsNullOrWhiteSpace(location)?location:activity??"Persona 5 Royal";
     }
 }
-
 interface IGameReader : IDisposable
 {
     bool Exited { get; }
@@ -192,12 +199,12 @@ interface IGameReader : IDisposable
     GameState? Read(Dictionary<string,string> locations);
     DialogueInfo[] DialogueDiagnostics();
 }
-
 sealed class GameReader : IGameReader
 {
     readonly Process process;
     readonly SafeProcessHandle handle;
     readonly long moduleBase;
+    readonly ConfidantSession confidantSession=new();
     public bool Exited=>process.HasExited;
     public string Build=>"Xbox 1.10.27.0 (tested)";
     GameReader(Process process)
@@ -256,7 +263,7 @@ sealed class GameReader : IGameReader
         var field=manager==0?0:Pointer(manager+0x48);
         var bytes=Bytes(calendar,3);
         int day=BinaryPrimitives.ReadUInt16LittleEndian(bytes),time=bytes[2];
-        var dialogue=DialogueDiagnostics().FirstOrDefault(d=>d.Speaker!=null || d.Label!=null);
+        var dialogue=SelectDialogue(DialogueDiagnostics());
         var usePreviousField=field==0;
         var ids=Bytes(usePreviousField?moduleBase+0x1f20380:field+0x1f0,4);
         int major=BinaryPrimitives.ReadUInt16LittleEndian(ids),minor=BinaryPrimitives.ReadUInt16LittleEndian(ids.AsSpan(2));
@@ -271,18 +278,26 @@ sealed class GameReader : IGameReader
         if(major==65535 || minor==65535 || (major==0 && minor==0)) return null;
         if(Pointer(moduleBase+0x1f20048)!=manager || (manager!=0 && Pointer(manager+0x48)!=field) || !Bytes(calendar,3).SequenceEqual(bytes) || !Bytes(usePreviousField?moduleBase+0x1f20380:field+0x1f0,4).SequenceEqual(ids)) return null;
         var id=$"{major}_{minor}";
-        var location=locations.GetValueOrDefault(id,"Exploring Tokyo / the Metaverse");
+        var location=LocationNames.Resolve(major,minor,locations,dungeon:0);
         var dungeon=field==0?0:BinaryPrimitives.ReadUInt16LittleEndian(Bytes(field+0x1fe,2));
         var floor=field==0?0:BinaryPrimitives.ReadUInt16LittleEndian(Bytes(field+0x200,2));
         var activity=ClassifyActivity(major,minor,dialogue,eventId,dungeon);
-        if(dungeon>0) location="Mementos";
+        var confidant=confidantSession.Observe(eventId,dialogue);
+        if(confidant!=null) activity=Confidants.HangingOut(confidant);
+        if(LocationNames.IsProceduralMementos(major,minor,dungeon)) location="Mementos";
+        if(Confidants.LocationOverride(eventId) is { } sceneLocation) location=sceneLocation;
         if(sequence is 9 or 10) activity="Watching a movie";
         if(sequence is 12 or 13) activity="Advancing the calendar";
         return new(Date(day).ToString("MMM d (ddd)",CultureInfo.InvariantCulture),new[]{"Early Morning","Morning","Lunchtime","Daytime","After School","Evening","Late Night"}[time],location,id,day,time,activity,dialogue?.Speaker,dialogue?.Label,sequence,eventId,dungeon,floor);
     }
     public static DateTime Date(int day)=>new DateTime(2016,4,1).AddDays(day);
+    internal static DialogueInfo? SelectDialogue(IEnumerable<DialogueInfo> contexts) => contexts
+        .Where(d=>d.Active!=0 || d.Speaker!=null || d.Label!=null)
+        .OrderByDescending(d=>d.Active!=0)
+        .FirstOrDefault();
     internal static string ClassifyActivity(int major,int minor,DialogueInfo? dialogue,string? eventId=null,int dungeon=0)
     {
+        if(Confidants.ActivityOverride(eventId) is { } sceneActivity) return sceneActivity;
         var label=dialogue?.Label??"";
         if(dialogue?.ScriptProfile=="CafeStudy" || eventId=="760_101")
             return label=="MSG_END_TALK_MORU"?"Finished studying":"Studying";
@@ -297,14 +312,10 @@ sealed class GameReader : IGameReader
         if(label=="MSG_BOOK_TITLE_000") return "Choosing a book";
         if(Regex.IsMatch(label,@"^(MSG_ReadStart|MND_ReadStart|MND_BOOK_START_THINK(?:_MOR)?|SEL_BOOK_START_THINK|SEL_BOOK_READ_CHK|MND_BOOK_READ_CHK)$")) return "Considering reading";
         if(Regex.IsMatch(label,@"^(MSG_Study_Q_(Sojiro|R|Rain)|MND_Study_Q|SEL_TABLE_USE)$")) return "Considering studying";
-        if(dialogue?.Label?.StartsWith("MSG_COOP_CHECK",StringComparison.Ordinal)==true && dialogue.Text!=null)
-        {
-            var partner=Regex.Match(dialogue.Text,@"hang out with ([A-Za-z][A-Za-z '\-]{0,30})\?",RegexOptions.IgnoreCase);
-            if(partner.Success) return "Talking to "+partner.Groups[1].Value.Trim();
-        }
+        var confidant=Confidants.Scene(eventId,dialogue);
+        if(confidant!=null) return Confidants.HangingOut(confidant);
         if(eventId!=null) return "Following the story";
-        if(dialogue?.Speaker!=null) return "In conversation · "+dialogue.Speaker;
-        if(dungeon>0) return "Exploring Mementos";
+        if(LocationNames.IsProceduralMementos(major,minor,dungeon)) return "Exploring Mementos";
         if(major==190 && minor==1) return "At the Mementos entrance";
         if(major==161) return "Exploring the Depths of Mementos";
         if(major==0 && minor==2) return "In the main menu";
@@ -450,7 +461,6 @@ static class Native
     [DllImport("kernel32.dll",SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)]
     internal static extern bool ReadProcessMemory(SafeProcessHandle process,nint address,[Out] byte[] buffer,nuint size,out nuint read);
 }
-
 sealed class DiscordIpc : IDisposable
 {
     readonly NamedPipeClientStream pipe;
